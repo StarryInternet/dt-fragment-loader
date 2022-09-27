@@ -68,7 +68,7 @@ struct dfl_fragment_id {
     char* param_str;
     u32 location;
     u32 compat;
-    int parse_error;
+    bool parse_error;
     struct list_head list;
 };
 
@@ -535,8 +535,8 @@ static int dfl_new_fragment_id(
             "l%d_c%d",
             &((*fid)->location),
             &((*fid)->compat));
-    if (ret < 2) {
-        (*fid)->parse_error = ret;
+    (*fid)->parse_error = (ret < 2);
+    if ((*fid)->parse_error) {
         pr_debug("Unable to parse loc/compat for param %s: %d\n",
                 (*fid)->param_str, ret);
     }
@@ -620,6 +620,9 @@ static int dfl_parse_params(
     pr_debug("Parsing params from string: %s\n", param_str);
 
     while ((cur_param_token = strsep(&param_str_cur, ",")) != NULL) {
+        if (strlen(cur_param_token) == 0) {
+            continue;
+        }
         ret = dfl_new_fragment_id(&new_fid, cur_param_token);
         if (ret) {
             pr_err("Abort parse. Failed constructing fid from token, %s\n",
